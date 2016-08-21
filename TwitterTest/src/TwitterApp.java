@@ -19,15 +19,15 @@ public class TwitterApp {
     public static int followersList;
     public static int userTimeline;
     public static String[] keeWords;
-
+    public static int inTime = 0;
 
     public static void main(String[] args) throws TwitterException, InterruptedException {
         ConfigurationBuilder configuration = new ConfigurationBuilder();
         configuration.setDebugEnabled(true)
-                .setOAuthConsumerKey("хххххх")
-                .setOAuthConsumerSecret("хххххх")
-                .setOAuthAccessToken("хххххх")
-                .setOAuthAccessTokenSecret("хххххх");
+                .setOAuthConsumerKey("xxxxxxxx")
+                .setOAuthConsumerSecret("xxxxxxxx")
+                .setOAuthAccessToken("xxxxxxxx")
+                .setOAuthAccessTokenSecret("xxxxxxxx");
 
         TwitterFactory tf = new TwitterFactory(configuration.build());
         twitter = tf.getInstance();
@@ -82,7 +82,7 @@ public class TwitterApp {
                 //System.out.println("Смотрим " + mYcount++ + "заход в цикл подщета фоловеров" + inputUser.getName());
 
                 List<User> listOffolowers = new ArrayList<>();
-                
+
                 checkLimit("/followers/list");
                 PagableResponseList<User> usersResponse = twitter.getFollowersList(inputUser.getScreenName(), nextCursor); // followers/list.json лимит 15
                 nextCursor = usersResponse.getNextCursor();
@@ -105,7 +105,7 @@ public class TwitterApp {
                         //System.out.println("Смотрим " + pageN + " заход просмотра твитов фоловера " + folower.getName());
                         int size = statusrs.size();
                         Paging page = new Paging(pageN++, 100);
-                        
+
                         checkLimit("/statuses/user_timeline");
                         List thisIterationStatus = twitter.getUserTimeline(folower.getScreenName(), page); //// statuses/user_timeline.json  180 лимит
                         statusrs.addAll(thisIterationStatus);
@@ -188,7 +188,9 @@ public class TwitterApp {
     private static void createConstuntsValue() throws TwitterException, InterruptedException { // метод задает значения переменным лимитов запросов
         for (String endpoint : ep) {
             String family = endpoint.split("/",3)[1];
-            checkLimit("/application/rate_limit_status");
+            if (inTime==1) {
+                checkLimit("/application/rate_limit_status");
+            }
             RateLimitStatus status = twitter.getRateLimitStatus(family).get(endpoint);
             System.out.println(" Endpoint " + endpoint);
             System.out.println("Limit " + status.getLimit());
@@ -209,6 +211,7 @@ public class TwitterApp {
             }
 
         }
+        inTime=1;
     }
 
     private static String getPatern(String[] keeWords) { // метод создает паттерн из ключевых слов
@@ -225,7 +228,7 @@ public class TwitterApp {
     }
 
     public static void checkLimit(String endpoint) throws TwitterException, InterruptedException { // метод проверяет переменные лимитов
-         int count;                                                                                //и останавливает программу на 16 минут при привышении лимитов
+         int count = 180;                                                                                //и останавливает программу на 16 минут при привышении лимитов
         if (endpoint.equals(ep[0])) {
 
             count = --rateLimitStatus;
@@ -241,7 +244,7 @@ public class TwitterApp {
             }
 
 
-        if (count<=1) {
+        if (count<=0) {
             System.err.println("Вы превысили лимит запросов. Необходимо подождать");
             long t = System.currentTimeMillis();
 
