@@ -24,10 +24,10 @@ public class TwitterApp {
     public static void main(String[] args) throws TwitterException, InterruptedException {
         ConfigurationBuilder configuration = new ConfigurationBuilder();
         configuration.setDebugEnabled(true)
-                .setOAuthConsumerKey("xxxxxxxx")
-                .setOAuthConsumerSecret("xxxxxxxx")
-                .setOAuthAccessToken("xxxxxxxx")
-                .setOAuthAccessTokenSecret("xxxxxxxx");
+                .setOAuthConsumerKey("xxxxxxx")
+                .setOAuthConsumerSecret("xxxxxxx")
+                .setOAuthAccessToken("128327278-("xxxxxxx")
+                .setOAuthAccessTokenSecret("xxxxxxx");
 
         TwitterFactory tf = new TwitterFactory(configuration.build());
         twitter = tf.getInstance();
@@ -46,6 +46,7 @@ public class TwitterApp {
         // Задаем масивключевых слов
         //keeWords = new String[]{"готовить", "рисовать"};
         System.out.println("Введите ключевые слова, черз пробел");
+        System.out.println("Предпочтительнный ввод латиницей. Возможны проблемы со сканированием cmd кирилицы");
         //Ввод из консоли
         keeWords = scanTheInputData();
 
@@ -107,7 +108,24 @@ public class TwitterApp {
                         Paging page = new Paging(pageN++, 100);
 
                         checkLimit("/statuses/user_timeline");
-                        List thisIterationStatus = twitter.getUserTimeline(folower.getScreenName(), page); //// statuses/user_timeline.json  180 лимит
+                        List thisIterationStatus = null;
+                        try {
+                            thisIterationStatus = twitter.getUserTimeline(folower.getScreenName(), page); //// statuses/user_timeline.json  180 лимит
+                        }
+                        catch (TwitterException e) {
+                            //если у юзеров защищенныйе аккаунты или удаленные
+                            if (e.getStatusCode() == HttpResponseCode.UNAUTHORIZED ||
+                                    e.getStatusCode() == HttpResponseCode.NOT_FOUND) {
+                                System.out.println("У вас нет доступпа к этому посту");
+                            }
+                            else {
+                                throw e;
+                            }
+                        }
+
+                        if (thisIterationStatus==null) {
+                            continue;
+                        }
                         statusrs.addAll(thisIterationStatus);
                         checkforAccord(thisIterationStatus);
 
@@ -154,7 +172,9 @@ public class TwitterApp {
     }
 
     private static void checkforAccord(List statusrs) { // метод проверяет твиты в соответствии с патерном из ключевых слов
+
         if (statusrs.size()!=0) {
+
 
             String pattern = getPatern(keeWords);
             Pattern p = Pattern.compile(pattern);
